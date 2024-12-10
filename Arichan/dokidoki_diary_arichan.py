@@ -31,7 +31,7 @@ if submit_btn:
     # 列を2つに分割する
     col1, col2 = st.columns(2)
 
-    # 左の列には絵日記を表示。imageのところにopenaiで生成した画像を渡す（やり方のイメージがまだついてない）。
+    # 左の列には絵日記を表示。imageのところにopenaiで生成した画像を渡す。
     with col1:
         # dall-e-3で日記内容を反映したイラストを作成
         client = OpenAI()
