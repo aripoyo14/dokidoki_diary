@@ -15,16 +15,16 @@ question_col, date_col = st.columns([25, 5])  # [25, 5]は列の比率
 
 # question列に日記記入を促す文を入れる
 with question_col:
-    st.markdown('<div style="font-size: 24px; text-align: center;">お疲れ様。今日はどんな1日だった？</div>', unsafe_allow_html=True)
+    st.markdown('<div style="font-size: 24px; text-align: center;">お疲れ様。今日はどんな1日だった？🌞☔⛅</div>', unsafe_allow_html=True)
 
 # date列に日付入力欄を入れる
 with date_col:
     date = st.date_input("")
 
 # 日記を入力する欄を入れる。openaiに渡したり、日記内容を反映した画像と合わせて日記を表示するためにdiary_inputに日記内容を代入する。
-diary_input = st.text_area("日記を入力する", height=150 ,label_visibility="hidden", placeholder="日記を入力する")
+diary_input = st.text_area("日記を入力する", height=150 ,label_visibility="hidden", placeholder="マイクに話しかけてね。ちょっと違う部分は手動で編集してね。ごめんね。🌞☔")
 # 送信ボタンを入れる
-submit_btn = st.button("送信")
+submit_btn = st.button("今日の日記生成")
 
 #送信ボタンが押されると以下の処理が走る
 if submit_btn:
@@ -53,7 +53,7 @@ if submit_btn:
         # 文章を枠で囲う処理を入れています。
         st.markdown("""                    
                     <div style="background-color: #F0F2F6; padding: 15px; border-radius: 5px;">
-                        diary_input
+                        今日の天気：晴れ（天気予報APIから取ってくる）\n diary_input
                     </div>
                     """, unsafe_allow_html=True)
 
