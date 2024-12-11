@@ -41,7 +41,8 @@ if submit_btn:
     with col1:
         # dall-e-3で日記内容を反映したイラストを作成
         #os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
-        client = OpenAI(api_key=st.secrets["openai"]["api_key"])
+        api_key = st.secrets["openai"]["api_key"]
+        client = OpenAI(api_key=api_key)
         response = client.images.generate(
             model="dall-e-3",
             prompt=f"Create a cute illustration based on the following text. \n #text \n {diary_input}",
