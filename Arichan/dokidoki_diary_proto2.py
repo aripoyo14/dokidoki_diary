@@ -1,12 +1,6 @@
 import streamlit as st
 import datetime
 from openai import OpenAI
-import sqlite3
-from dotenv import load_dotenv
-import os
-
-# .envファイルから環境変数を読み込む
-load_dotenv()
 
 # 左上のロゴ（さやさんデザインを仮で使用）
 st.logo(
@@ -40,8 +34,6 @@ if submit_btn:
     # 左の列には絵日記を表示。imageのところにopenaiで生成した画像を渡す。
     with col1:
         # dall-e-3で日記内容を反映したイラストを作成
-        openai.api_key = st.secrets["openai"]["api_key"]
-        os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
         client = OpenAI()
         response = client.images.generate(
             model="dall-e-3",
@@ -61,7 +53,7 @@ if submit_btn:
         # 文章を枠で囲う処理を入れています。
         st.markdown("""                    
                     <div style="background-color: #F0F2F6; padding: 15px; border-radius: 5px;">
-                        diary_input
+                        今日の天気：晴れ（天気予報APIから取ってくる）diary_input
                     </div>
                     """, unsafe_allow_html=True)
 
@@ -72,19 +64,3 @@ if submit_btn:
                         フィードバックが表示される
                     </div>
                     """, unsafe_allow_html=True)
-    '''    
-    conn = sqlite3.connect('dokidoki_diary.db')
-    cur = conn.cursor()
-
-    data = (1, date, diary_input, feedback, image)
-        
-
-    cur.execute(
-        "INSERT INTO Diary_table (user_id, date, diary, feedback, illustration) VALUES (?,?,?,?,?)",
-        data
-    )
-
-    conn.commit()
-    conn.close()
-    '''
-    
