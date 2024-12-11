@@ -10,11 +10,11 @@ from openai import OpenAI
 
 # 左上のロゴ（さやさんデザインを仮で使用）
 st.logo(
-    "images_arichan/team_dokidoki_logo.png",
+    "images_master/team_dokidoki_logo.png",
 )
 
 # 徳井風のイケメン（DALL-E3作※2回作ったら1日分のトークンが無くなった）
-st.image("images_arichan/tokui_ver1.png") #,caption="Team DokiDoki")
+st.image("images_master/tokui_ver1.png") #,caption="Team DokiDoki")
 
 # 小さい列と大きい列を作成
 question_col, date_col = st.columns([25, 5])  # [25, 5]は列の比率
