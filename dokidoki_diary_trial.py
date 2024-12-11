@@ -40,7 +40,7 @@ if submit_btn:
     # 左の列には絵日記を表示。imageのところにopenaiで生成した画像を渡す。
     with col1:
         # dall-e-3で日記内容を反映したイラストを作成
-        openai.api_key = st.secrets["openai"]["api_key"]
+        OpenAI.api_key = st.secrets["openai"]["api_key"]
         #os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
         client = OpenAI()
         response = client.images.generate(
