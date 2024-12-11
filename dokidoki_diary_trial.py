@@ -1,12 +1,12 @@
 import streamlit as st
 import datetime
 from openai import OpenAI
-import sqlite3
-from dotenv import load_dotenv
-import os
+# import sqlite3
+# from dotenv import load_dotenv
+# import os
 
 # .envファイルから環境変数を読み込む
-load_dotenv()
+# load_dotenv()
 
 # 左上のロゴ（さやさんデザインを仮で使用）
 st.logo(
@@ -41,7 +41,7 @@ if submit_btn:
     with col1:
         # dall-e-3で日記内容を反映したイラストを作成
         openai.api_key = st.secrets["openai"]["api_key"]
-        os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
+        #os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
         client = OpenAI()
         response = client.images.generate(
             model="dall-e-3",
