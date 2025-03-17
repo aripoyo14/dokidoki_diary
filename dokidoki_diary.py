@@ -170,8 +170,31 @@ st.markdown(custom_css, unsafe_allow_html=True)
 # ９）画面上部にヘッダー画像（背景とは別）
 st.image(top_image_path, use_container_width=True)
 
+###############################
+#10) データベース
+###############################
+# データベースに接続し、dokidoki_diary.dbという名前のDBファイルを作成あるいは開く
+conn = sqlite3.connect('dokidoki_diary.db')
+#データベースを操作するためのカーソルを作成
+c = conn.cursor()
+
+# テーブルの作成（存在しない場合のみ）日付（日付型）、日記とFB（テキスト型）
+c.execute('''CREATE TABLE IF NOT EXISTS Diary_table(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date date,
+            diary TEXT,
+            feedback TEXT)''')
+
+# テーブルに 'user' カラムがない場合はテキスト型で追加
+try:
+    c.execute("ALTER TABLE Diary_table ADD COLUMN user TEXT")
+# カラムがすでに存在する場合、SQLiteはエラーを発生させるが、
+except sqlite3.OperationalError:
+    # 'user' カラムが既に存在している場合はスキップし、処理を継続
+    pass  
+
 ##############################
-# 10）メインタブ　日付選択と気分でカラムを２つに
+# 11）メインタブ　日付選択と気分でカラムを２つに
 ##############################
 with st.container():
     col1, col2 = st.columns(2)
@@ -357,20 +380,14 @@ with tab1:
     image_url = response.data[0].url
     st.image(image_url, width=650, use_container_width=False)  # use_container_width=False に設定（幅を固定）
 
-    # 日記の内容をデータベースに格納
-    conn = sqlite3.connect('dokidoki_diary.db')
-    cur = conn.cursor()
-
-    data = (1, selected_date, diary_input, feedback_comment)
-        
-    cur.execute(
-        "INSERT INTO Diary_table (user_id, date, diary, feedback) VALUES (?,?,?,?)",
-        data
-    )
-
+    # 日記とFBをDBに格納
+    c.execute("INSERT INTO Diary_table (user, date, diary, feedback) VALUES (?, ?, ?, ?)",
+            (st.session_state["authenticated"],selected_date ,diary_input ,feedback_comment ))
     conn.commit()
-    conn.close()
-
+    st.success("日記を保存したよ")
+    
+    # データベース接続を終了
+    conn.close()      
 
 # タブ2: 振り返りページ
 
