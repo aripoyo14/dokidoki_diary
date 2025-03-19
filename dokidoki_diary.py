@@ -33,6 +33,10 @@ db_path = "dokidoki_diary.db"
 # データベースのテーブル名を指定
 table_name = "Diary_table"
 
+# 認証状態の初期化
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = "default_user"
+
 ############################################
 # カスタムCSS（背景全体を画像、文字色白、ボタンの丸角、中央配置など）
 ############################################
@@ -385,7 +389,7 @@ with tab1:
 
     # 日記とFBをDBに格納
     c.execute("INSERT INTO Diary_table (user, date, diary, feedback) VALUES (?, ?, ?, ?)",
-            (st.session_state["authenticated"],selected_date ,diary_input ,feedback_comment ))
+            (st.session_state.authenticated, selected_date, diary_input, feedback_comment))
     conn.commit()
     st.success("日記を保存したよ")
     
