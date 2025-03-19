@@ -375,17 +375,48 @@ with tab1:
             )
 
     # DALL-E 3で日記内容を反映したイラストを作成
-    response = client.images.generate(
-        model="dall-e-3",
-        prompt=f"ディズニー風、トイ・ストーリー風のアメリカンモダンなスタイルで、明るくカラフルな色使いと温かみのある雰囲気を持つ、以下の日記内容に基づいたスタイリッシュなイラストを作成してください。\n#text\n{diary_input}",
-        size="1792x1024",
-        quality="standard",
-        n=1,
-        ) 
+    try:
+        # プロンプトを日本語から英語に変換するためのプロンプト
+        translation_prompt = f"""
+        以下の日本語の日記内容を英語に翻訳してください。翻訳は画像生成用のプロンプトとして使用されます。
+        翻訳は簡潔で、画像生成に適した形式にしてください。
 
+        日記内容：
+        {diary_input}
+        """
 
-    image_url = response.data[0].url
-    st.image(image_url, width=650, use_container_width=False)  # use_container_width=False に設定（幅を固定）
+        # 翻訳を取得
+        translation_response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "user", "content": translation_prompt}
+            ],
+            temperature=0.3,
+        )
+        translated_text = translation_response.choices[0].message.content.strip()
+
+        # DALL-E 3用のプロンプトを作成
+        image_prompt = f"""
+        Create a Disney-style, Toy Story-inspired American modern illustration with bright, colorful tones and a warm atmosphere.
+        The illustration should be stylish and reflect the following diary content:
+        {translated_text}
+        """
+
+        # 画像を生成
+        response = client.images.generate(
+            model="dall-e-3",
+            prompt=image_prompt,
+            size="1792x1024",
+            quality="standard",
+            n=1,
+        )
+
+        image_url = response.data[0].url
+        st.image(image_url, width=650, use_container_width=False)
+
+    except Exception as e:
+        st.error(f"画像の生成中にエラーが発生しました: {str(e)}")
+        st.info("画像の生成をスキップして続行します。")
 
     # 日記とFBをDBに格納
     c.execute("INSERT INTO Diary_table (user, date, diary, feedback) VALUES (?, ?, ?, ?)",
