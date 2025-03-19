@@ -286,86 +286,89 @@ tab1, tab2 = st.tabs(["Make a Diary", "Record of Memories"])
 
 # タブ1（今日の日記ページ）に日記を入力する
 with tab1:
+    # タブ1用のセッション状態を初期化
+    if 'tab1_submitted' not in st.session_state:
+        st.session_state.tab1_submitted = False
 
     # 子モジュールから音声認識結果を取得
     recognized_text = get_recognized_text()
 
-    # 日記を入力する欄を入れる。openaiに渡したり、日記内容を反映した画像と合わせて日記を表示するためにdiary_inputに日記内容を代入する。
+    # 日記を入力する欄を入れる
     diary_input = st.text_area(
         "ちょっと違うところは手で修正してね。", 
         height=150,
         placeholder="",
-        value=recognized_text  # 音声認識結果をデフォルト値として設定
+        value=recognized_text
     )
 
     # 送信ボタンを入れる
-    submit_btn = st.button("F i n i s h")
+    submit_btn = st.button("F i n i s h", key='tab1_submit')
 
     # 送信ボタンが押されると以下の処理が走る
-    if submit_btn:
-        
+    if submit_btn and not st.session_state.tab1_submitted:
+        st.session_state.tab1_submitted = True
         # フィードバックの出力前にフィードバックに使用するプロンプトをそれぞれoptionで指定
-            # イメージ画像は直接パスで持ってきている（相対だとうまく反映されなかった※課題）
-            personality_prompt = f"""あなたは日本のお笑い芸人チュートリアルの『徳井義実』です。京都府出身で、関西弁口調で話します。"""
-            face_image_path = "images_master/tokui.png"
+        # イメージ画像は直接パスで持ってきている（相対だとうまく反映されなかった※課題）
+        personality_prompt = f"""あなたは日本のお笑い芸人チュートリアルの『徳井義実』です。京都府出身で、関西弁口調で話します。"""
+        face_image_path = "images_master/tokui.png"
                         
-            #選択した気分をプロンプトに反映させる
-            mood_prompt = options[option]
-            
-            # 天気がない場合は '不明' とする
-            selected_weather = weather_today if weather_today else '不明'
-            
-            # ここからはフィードバック自体のプロンプトを指定
-            # 日記の要約・天気情報・2名のパーソナルプロンプトからコメントするように指示
-            # 天気は必ずしもフィードバックに使用しなくても良いとも補足
-            feedback_prompt = f"""
-            以下はユーザーの日記内容の要約と、その日の埼玉の天気です。
+        #選択した気分をプロンプトに反映させる
+        mood_prompt = options[option]
+        
+        # 天気がない場合は '不明' とする
+        selected_weather = weather_today if weather_today else '不明'
+        
+        # ここからはフィードバック自体のプロンプトを指定
+        # 日記の要約・天気情報・2名のパーソナルプロンプトからコメントするように指示
+        # 天気は必ずしもフィードバックに使用しなくても良いとも補足
+        feedback_prompt = f"""
+        以下はユーザーの日記内容の要約と、その日の埼玉の天気です。
 
-            - 天気: {selected_weather if selected_weather else '不明'}
+        - 天気: {selected_weather if selected_weather else '不明'}
 
-            ユーザーは毎日日記を通じて、その日の出来事や気持ちや悩みを示しています。
-            あなたの役割は、{personality_prompt}です。
-            {diary_input}というユーザーの状況や心情を理解し、{option}ユーザの気分に基づいて、{mood_prompt}
+        ユーザーは毎日日記を通じて、その日の出来事や気持ちや悩みを示しています。
+        あなたの役割は、{personality_prompt}です。
+        {diary_input}というユーザーの状況や心情を理解し、{option}ユーザの気分に基づいて、{mood_prompt}
 
-            もし天気 ({selected_weather if selected_weather else '不明'}) の状況がユーザーの気分転換や行動提案に有効に活かせる場合は、天気を考慮したアドバイスを含めてください。
-            しかし、天気を考慮しても特にユーザーの役に立たないと判断できる場合は、無理に天気に言及する必要はありません。ただし、天気情報({selected_weather if selected_weather else '不明'})をそのまま使うのではなく「晴れ」「雨」「曇り」などの話し言葉に変更して出力してください。
+        もし天気 ({selected_weather if selected_weather else '不明'}) の状況がユーザーの気分転換や行動提案に有効に活かせる場合は、天気を考慮したアドバイスを含めてください。
+        しかし、天気を考慮しても特にユーザーの役に立たないと判断できる場合は、無理に天気に言及する必要はありません。ただし、天気情報({selected_weather if selected_weather else '不明'})をそのまま使うのではなく「晴れ」「雨」「曇り」などの話し言葉に変更して出力してください。
 
-            ＃制約条件
-            - {diary_input}というユーザーの状況や心情に共感してください。
-            - 天気を有効活用できそうなアイデアがあれば取り入れてください。なければ天気に関する言及は省いて構いません。
-            - {personality_prompt}の口調やキャラ設定を守った状態で回答を生成してください。
-            - {option}というユーザの気分をもとに、{mood_prompt}
+        ＃制約条件
+        - {diary_input}というユーザーの状況や心情に共感してください。
+        - 天気を有効活用できそうなアイデアがあれば取り入れてください。なければ天気に関する言及は省いて構いません。
+        - {personality_prompt}の口調やキャラ設定を守った状態で回答を生成してください。
+        - {option}というユーザの気分をもとに、{mood_prompt}
 
-            以上を踏まえ、ユーザーを励ますコメントを作成してください。
-            """
+        以上を踏まえ、ユーザーを励ますコメントを作成してください。
+        """
 
-            # フィードバックを生成する
-            feedback_response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "user", "content": feedback_prompt}
-                ],
-                temperature=0.7,
+        # フィードバックを生成する
+        feedback_response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "user", "content": feedback_prompt}
+            ],
+            temperature=0.7,
+        )
+        feedback_comment = feedback_response.choices[0].message.content.strip()
+
+        st.markdown("### M e s s a g e")
+        # フィードバックを表示する
+        # カラムを２分割（左:徳井の画像 右:メッセージ吹き出し）
+        left_col, right_col = st.columns([1,3])
+
+        with left_col:
+            st.image(face_image_path, width=100, caption=None)
+
+        with right_col:
+            st.markdown(
+                f"""
+                <div class="feedback-bubble">
+                    {feedback_comment}
+                </div>
+                """,
+                unsafe_allow_html=True
             )
-            feedback_comment = feedback_response.choices[0].message.content.strip()
-
-            st.markdown("### M e s s a g e")
-            # フィードバックを表示する
-            # カラムを２分割（左:徳井の画像 右:メッセージ吹き出し）
-            left_col, right_col = st.columns([1,3])
-
-            with left_col:
-                st.image(face_image_path, width=100, caption=None)
-
-            with right_col:
-                st.markdown(
-                    f"""
-                    <div class="feedback-bubble">
-                        {feedback_comment}
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
 
     # DALL-E 3で日記内容を反映したイラストを作成
     response = client.images.generate(
@@ -390,11 +393,18 @@ with tab1:
     conn.close()      
 
 # タブ2: 振り返りページ
-
-#＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
-
 with tab2:
-    reflect_date = st.date_input("Check the date you want to remember", value=datetime.now().date())
+    # タブ2用のセッション状態を初期化
+    if 'tab2_date' not in st.session_state:
+        st.session_state.tab2_date = datetime.now().date()
+
+    reflect_date = st.date_input(
+        "Check the date you want to remember", 
+        value=st.session_state.tab2_date,
+        key='tab2_date_input'
+    )
+    st.session_state.tab2_date = reflect_date
+
     one_month_ago = reflect_date - pd.DateOffset(months=1)
     one_year_ago = reflect_date - pd.DateOffset(years=1)
 
