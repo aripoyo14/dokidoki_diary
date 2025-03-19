@@ -311,20 +311,13 @@ with tab1:
     # 送信ボタンが押されると以下の処理が走る
     if submit_btn and not st.session_state.tab1_submitted:
         st.session_state.tab1_submitted = True
-        # フィードバックの出力前にフィードバックに使用するプロンプトをそれぞれoptionで指定
-        # イメージ画像は直接パスで持ってきている（相対だとうまく反映されなかった※課題）
+        
+        # フィードバックの生成と表示
         personality_prompt = f"""あなたは日本のお笑い芸人チュートリアルの『徳井義実』です。京都府出身で、関西弁口調で話します。"""
         face_image_path = "images_master/tokui.png"
-                        
-        #選択した気分をプロンプトに反映させる
         mood_prompt = options[option]
-        
-        # 天気がない場合は '不明' とする
         selected_weather = weather_today if weather_today else '不明'
         
-        # ここからはフィードバック自体のプロンプトを指定
-        # 日記の要約・天気情報・2名のパーソナルプロンプトからコメントするように指示
-        # 天気は必ずしもフィードバックに使用しなくても良いとも補足
         feedback_prompt = f"""
         以下はユーザーの日記内容の要約と、その日の埼玉の天気です。
 
@@ -356,9 +349,8 @@ with tab1:
         )
         feedback_comment = feedback_response.choices[0].message.content.strip()
 
+        # フィードバックを表示
         st.markdown("### M e s s a g e")
-        # フィードバックを表示する
-        # カラムを２分割（左:徳井の画像 右:メッセージ吹き出し）
         left_col, right_col = st.columns([1,3])
 
         with left_col:
@@ -374,58 +366,54 @@ with tab1:
                 unsafe_allow_html=True
             )
 
-    # DALL-E 3で日記内容を反映したイラストを作成
-    try:
-        # プロンプトを日本語から英語に変換するためのプロンプト
-        translation_prompt = f"""
-        以下の日本語の日記内容を英語に翻訳してください。翻訳は画像生成用のプロンプトとして使用されます。
-        翻訳は簡潔で、画像生成に適した形式にしてください。
+        # DALL-E 3で日記内容を反映したイラストを作成
+        try:
+            translation_prompt = f"""
+            以下の日本語の日記内容を英語に翻訳してください。翻訳は画像生成用のプロンプトとして使用されます。
+            翻訳は簡潔で、画像生成に適した形式にしてください。
 
-        日記内容：
-        {diary_input}
-        """
+            日記内容：
+            {diary_input}
+            """
 
-        # 翻訳を取得
-        translation_response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {"role": "user", "content": translation_prompt}
-            ],
-            temperature=0.3,
-        )
-        translated_text = translation_response.choices[0].message.content.strip()
+            translation_response = client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "user", "content": translation_prompt}
+                ],
+                temperature=0.3,
+            )
+            translated_text = translation_response.choices[0].message.content.strip()
 
-        # DALL-E 3用のプロンプトを作成
-        image_prompt = f"""
-        Create a Disney-style, Toy Story-inspired American modern illustration with bright, colorful tones and a warm atmosphere.
-        The illustration should be stylish and reflect the following diary content:
-        {translated_text}
-        """
+            image_prompt = f"""
+            Create a Disney-style, Toy Story-inspired American modern illustration with bright, colorful tones and a warm atmosphere.
+            The illustration should be stylish and reflect the following diary content:
+            {translated_text}
+            """
 
-        # 画像を生成
-        response = client.images.generate(
-            model="dall-e-3",
-            prompt=image_prompt,
-            size="1792x1024",
-            quality="standard",
-            n=1,
-        )
+            response = client.images.generate(
+                model="dall-e-3",
+                prompt=image_prompt,
+                size="1792x1024",
+                quality="standard",
+                n=1,
+            )
 
-        image_url = response.data[0].url
-        st.image(image_url, width=650, use_container_width=False)
+            image_url = response.data[0].url
+            st.image(image_url, width=650, use_container_width=False)
 
-    except Exception as e:
-        st.error(f"画像の生成中にエラーが発生しました: {str(e)}")
-        st.info("画像の生成をスキップして続行します。")
+        except Exception as e:
+            st.error(f"画像の生成中にエラーが発生しました: {str(e)}")
+            st.info("画像の生成をスキップして続行します。")
 
-    # 日記とFBをDBに格納
-    c.execute("INSERT INTO Diary_table (user, date, diary, feedback) VALUES (?, ?, ?, ?)",
-            (st.session_state.authenticated, selected_date, diary_input, feedback_comment))
-    conn.commit()
-    st.success("日記を保存したよ")
-    
-    # データベース接続を終了
-    conn.close()      
+        # 日記とFBをDBに格納
+        c.execute("INSERT INTO Diary_table (user, date, diary, feedback) VALUES (?, ?, ?, ?)",
+                (st.session_state.authenticated, selected_date, diary_input, feedback_comment))
+        conn.commit()
+        st.success("日記を保存したよ")
+        
+        # データベース接続を終了
+        conn.close()
 
 # タブ2: 振り返りページ
 with tab2:
