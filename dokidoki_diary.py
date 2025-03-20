@@ -288,6 +288,90 @@ with st.container():
 ##############################
 tab1, tab2 = st.tabs(["Make a Diary", "Record of Memories"])
 
+# タブ2: 振り返りページ
+with tab2:
+    # タブ2用のセッション状態を初期化
+    if 'tab2_date' not in st.session_state:
+        st.session_state.tab2_date = datetime.now().date()
+
+    # タブ2用のデータベース接続
+    conn_tab2 = sqlite3.connect(db_path)
+    c_tab2 = conn_tab2.cursor()
+
+    reflect_date = st.date_input(
+        "Check the date you want to remember", 
+        value=st.session_state.tab2_date,
+        key='tab2_date_input'
+    )
+    st.session_state.tab2_date = reflect_date
+
+    one_month_ago = reflect_date - pd.DateOffset(months=1)
+    one_year_ago = reflect_date - pd.DateOffset(years=1)
+
+    def get_diary_data(date_obj):
+        date_str = date_obj.strftime('%Y-%m-%d')
+        c_tab2.execute(f"SELECT diary, feedback FROM {table_name} WHERE date = ?", (date_str,))
+        row = c_tab2.fetchone()
+        if row:
+            diary, feedback = row
+            return (date_str, diary, feedback)
+        else:
+            return None
+
+    def display_diary_feedback(label, data_tuple):
+        st.markdown(f"#### {label}")
+        if data_tuple:
+            date_str, diary, feedback = data_tuple
+            # 3カラムに分ける
+            date_col, diary_col, feedback_col = st.columns([1, 2, 2])
+            with date_col:
+                st.markdown(f"**{date_str}**")
+            with diary_col:
+                st.markdown("**Diary**")
+                st.markdown(
+                    f"""
+                    <div class="diary-bubble">
+                        {diary}
+                     </div>
+                    """, unsafe_allow_html=True
+                )
+            with feedback_col:
+                st.markdown("**Feedback**")
+                st.markdown(
+                    f"""
+                    <div class="feedback-bubble">
+                        {feedback}
+                    </div>
+                    """, unsafe_allow_html=True
+                )
+        else:
+            # データがない場合
+            date_col, diary_col, feedback_col = st.columns([1, 2, 2])
+            with date_col:
+                st.markdown("**ー**")
+            with diary_col:
+                st.markdown("**Diary**")
+                st.markdown("ー")
+            with feedback_col:
+                st.markdown("**Feedback**")
+                st.markdown("ー")
+
+    data_current = get_diary_data(reflect_date)
+    data_month = get_diary_data(one_month_ago.to_pydatetime())
+    data_year = get_diary_data(one_year_ago.to_pydatetime())
+
+    # 表示
+    display_diary_feedback("", data_current)
+
+    st.markdown("#### 1ヶ月前")
+    display_diary_feedback("", data_month)
+
+    st.markdown("#### 1年前")
+    display_diary_feedback("", data_year)
+
+    # タブ2のデータベース接続を終了
+    conn_tab2.close()
+
 # タブ1（今日の日記ページ）に日記を入力する
 with tab1:
     # タブ1用のセッション状態を初期化
@@ -414,82 +498,3 @@ with tab1:
         
         # データベース接続を終了
         conn.close()
-
-# タブ2: 振り返りページ
-with tab2:
-    # タブ2用のセッション状態を初期化
-    if 'tab2_date' not in st.session_state:
-        st.session_state.tab2_date = datetime.now().date()
-
-    reflect_date = st.date_input(
-        "Check the date you want to remember", 
-        value=st.session_state.tab2_date,
-        key='tab2_date_input'
-    )
-    st.session_state.tab2_date = reflect_date
-
-    one_month_ago = reflect_date - pd.DateOffset(months=1)
-    one_year_ago = reflect_date - pd.DateOffset(years=1)
-
-    def get_diary_data(date_obj):
-        date_str = date_obj.strftime('%Y-%m-%d')
-        conn = sqlite3.connect(db_path)
-        c = conn.cursor()
-        c.execute(f"SELECT diary, feedback FROM {table_name} WHERE date = ?", (date_str,))
-        row = c.fetchone()
-        conn.close()
-        if row:
-            diary, feedback = row
-            return (date_str, diary, feedback)
-        else:
-            return None
-    def display_diary_feedback(label, data_tuple):
-        st.markdown(f"#### {label}")
-        if data_tuple:
-            date_str, diary, feedback = data_tuple
-            # 3カラムに分ける
-            date_col, diary_col, feedback_col = st.columns([1, 2, 2])
-            with date_col:
-                st.markdown(f"**{date_str}**")
-            with diary_col:
-                st.markdown("**Diary**")
-                st.markdown(
-                    f"""
-                    <div class="diary-bubble">
-                        {diary}
-                     </div>
-                    """, unsafe_allow_html=True
-                )
-            with feedback_col:
-                st.markdown("**Feedback**")
-                st.markdown(
-                    f"""
-                    <div class="feedback-bubble">
-                        {feedback}
-                    </div>
-                    """, unsafe_allow_html=True
-                )
-        else:
-            # データがない場合
-            date_col, diary_col, feedback_col = st.columns([1, 2, 2])
-            with date_col:
-                st.markdown("**ー**")
-            with diary_col:
-                st.markdown("**Diary**")
-                st.markdown("ー")
-            with feedback_col:
-                st.markdown("**Feedback**")
-                st.markdown("ー")
-
-    data_current = get_diary_data(reflect_date)
-    data_month = get_diary_data(one_month_ago.to_pydatetime())
-    data_year = get_diary_data(one_year_ago.to_pydatetime())
-
-# 表示
-    display_diary_feedback("", data_current)
-
-    st.markdown("#### 1ヶ月前")
-    display_diary_feedback("", data_month)
-
-    st.markdown("#### 1年前")
-    display_diary_feedback("", data_year)
