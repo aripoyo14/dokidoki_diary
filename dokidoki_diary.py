@@ -10,7 +10,7 @@ import pandas as pd
 import sqlite3
 import base64
 
-# OpenAIクライアントの初期化（初期化って何だ？）
+# OpenAIクライアントの初期化
 api_key = st.secrets["openai"]["api_key"]
 client = OpenAI(api_key=api_key)
 
@@ -490,11 +490,15 @@ with tab1:
             st.error(f"画像の生成中にエラーが発生しました: {str(e)}")
             st.info("画像の生成をスキップして続行します。")
 
+        # タブ1用のデータベース接続を作成
+        conn_tab1 = sqlite3.connect(db_path)
+        c_tab1 = conn_tab1.cursor()
+
         # 日記とFBをDBに格納
-        c.execute("INSERT INTO Diary_table (user, date, diary, feedback) VALUES (?, ?, ?, ?)",
+        c_tab1.execute("INSERT INTO Diary_table (user, date, diary, feedback) VALUES (?, ?, ?, ?)",
                 (st.session_state.authenticated, selected_date, diary_input, feedback_comment))
-        conn.commit()
+        conn_tab1.commit()
         st.success("日記を保存したよ")
         
-        # データベース接続を終了
-        conn.close()
+        # タブ1のデータベース接続を終了
+        conn_tab1.close()
